@@ -1,625 +1,767 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Asteroids Mobile</title>
-    <style>
-        body {
-            margin: 0;
-            overflow: hidden;
-            background: black;
-            touch-action: none;
-            -webkit-touch-callout: none;
-            -webkit-user-select: none;
-            user-select: none;
-        }
-        canvas {
-            display: block;
-            background-image: url('https://images.unsplash.com/photo-1534796636912-3b95b3ab5986?w=800&auto=format');
-            background-size: cover;
-        }
-        .controls {
-            position: fixed;
-            bottom: 0;
-            width: 100%;
-            height: 50%;
-            display: flex;
-            pointer-events: none;
-        }
-        #joystick-zone {
-            position: absolute;
-            left: 0;
-            bottom: 0;
-            width: 50%;
-            height: 100%;
-            pointer-events: all;
-            touch-action: none;
-        }
-        #joystick-visual {
-            position: absolute;
-            width: 80px;
-            height: 80px;
-            background: rgba(255, 255, 255, 0.3);
-            border-radius: 50%;
-            transform: translate(-50%, -50%);
-            display: none;
-        }
-        #fireButton {
-            position: absolute;
-            right: 20px;
-            bottom: 20px;
-            font-size: 24px;
-            padding: 20px 25px;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.2);
-            color: white;
-            border: none;
-            pointer-events: all;
-            touch-action: manipulation;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0, touch-action: manipulation">
+  <title>NEON VOID • CYBER ASTEROIDS</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      background: #0a0c0f;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      font-family: 'Courier New', monospace;
+      touch-action: pan-x pan-y pinch-zoom;
+    }
+    .game-container {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      background: radial-gradient(circle at 20% 20%, #1a0e2b, #03010a);
+    }
+    canvas {
+      display: block;
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+    }
+    .ui-overlay {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      color: #00ffff;
+      font-size: clamp(16px, 4vw, 22px);
+      text-shadow: 0 0 15px #00ffff, 0 0 5px #ff00c8;
+      background: rgba(0, 0, 0, 0.5);
+      padding: 12px 18px;
+      border-radius: 0;
+      border-left: 4px solid #ff00c8;
+      letter-spacing: 1px;
+      backdrop-filter: blur(4px);
+      line-height: 1.6;
+      z-index: 10;
+      pointer-events: none;
+    }
+    .ui-overlay span {
+      color: #ff66f0;
+      font-weight: bold;
+    }
+    .controls {
+      position: absolute;
+      bottom: 30px;
+      left: 0;
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      padding: 0 25px;
+      pointer-events: none;
+      z-index: 20;
+    }
+    #joystick-zone {
+      width: 140px;
+      height: 140px;
+      background: rgba(0, 255, 255, 0.08);
+      border: 2px solid #00ffff;
+      border-radius: 70px;
+      box-shadow: 0 0 35px #00ffff55, inset 0 0 20px #ff00c844;
+      backdrop-filter: blur(10px);
+      pointer-events: auto;
+      touch-action: none;
+      position: relative;
+    }
+    #joystick-visual {
+      position: absolute;
+      width: 60px;
+      height: 60px;
+      background: radial-gradient(circle, #ff00c8, #00ffff);
+      border-radius: 30px;
+      box-shadow: 0 0 45px #ff00c8, 0 0 20px #00ffff;
+      opacity: 0.9;
+      transform: translate(-50%, -50%);
+      display: none;
+      border: 2px solid white;
+    }
+    #fireButton {
+      width: 90px;
+      height: 90px;
+      border-radius: 50%;
+      background: rgba(10, 0, 20, 0.7);
+      border: 3px solid #ff00c8;
+      box-shadow: 0 0 50px #ff00c8, 0 0 25px #00ffff inset;
+      color: #00ffff;
+      font-size: 28px;
+      font-weight: bold;
+      text-transform: uppercase;
+      backdrop-filter: blur(12px);
+      pointer-events: auto;
+      touch-action: manipulation;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      letter-spacing: 2px;
+      transition: 0.1s;
+      text-shadow: 0 0 15px cyan;
+    }
+    #fireButton:active {
+      background: #ff00c8;
+      color: black;
+      box-shadow: 0 0 70px #ff00c8;
+      border-color: white;
+    }
+    @media (max-width: 600px) {
+      #joystick-zone {
+        width: 110px;
+        height: 110px;
+      }
+      #fireButton {
+        width: 75px;
+        height: 75px;
+        font-size: 22px;
+      }
+    }
+    .demo-message {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: #ff00c8;
+      font-size: 2.5rem;
+      text-align: center;
+      text-shadow: 0 0 30px #00ffff, 0 0 20px #ff00c8;
+      background: rgba(0,0,0,0.7);
+      padding: 20px 40px;
+      border: 2px dashed #00ffff;
+      backdrop-filter: blur(15px);
+      z-index: 30;
+      letter-spacing: 5px;
+    }
+  </style>
 </head>
 <body>
-    <canvas id="gameCanvas"></canvas>
-    <div class="controls">
-        <div id="joystick-zone"></div>
-        <div id="joystick-visual"></div>
-        <button id="fireButton">🔥</button>
+<div class="game-container">
+  <canvas id="gameCanvas"></canvas>
+  <div class="ui-overlay" id="uiStats">
+    <div>❤️ <span id="livesDisplay">3</span></div>
+    <div>💠 <span id="scoreDisplay">0</span></div>
+    <div>⚡ LEVEL <span id="levelDisplay">1</span></div>
+    <div id="powerUpDisplay" style="color:#ffcc00;"></div>
+  </div>
+  <div class="demo-message" id="demoMessage" style="display: none;">TAP TO BEGIN</div>
+  <div class="controls">
+    <div id="joystick-zone">
+      <div id="joystick-visual"></div>
     </div>
+    <button id="fireButton">◈ FIRE</button>
+  </div>
+</div>
 
-    <script>
-    // Main game initialization
+<script>
+  (function() {
     const canvas = document.getElementById("gameCanvas");
     const ctx = canvas.getContext("2d");
+
+    // UI elements
+    const livesDisplay = document.getElementById("livesDisplay");
+    const scoreDisplay = document.getElementById("scoreDisplay");
+    const levelDisplay = document.getElementById("levelDisplay");
+    const powerUpDisplay = document.getElementById("powerUpDisplay");
+    const demoMessage = document.getElementById("demoMessage");
+
     const fireButton = document.getElementById("fireButton");
     const joystickVisual = document.getElementById("joystick-visual");
+    const joystickZone = document.getElementById("joystick-zone");
 
-    // Game state variables
+    // --- Cyberpunk palette ---
+    const neonCyan = "#00ffff";
+    const neonMagenta = "#ff00c8";
+    const neonYellow = "#ffcc00";
+    const wireframeWhite = "#e0e0ff";
+
+    // Game state
     let bullets = [], particles = [], asteroids = [], explosions = [], powerUps = [];
-    let lives = 3, fadeAlpha = 0, score = 0, level = 1;
-    let gameStarted = false, gameOver = false, demoMode = false;
+    let lives = 3, score = 0, level = 1;
+    let gameStarted = false, gameOver = false, demoMode = true;
+    let fadeAlpha = 0;
     let countdownTimer = 600;
-    const playAgainRect = { x: canvas.width / 2 - 100, y: canvas.height / 2 + 40, w: 200, h: 50 };
     let activePowerUp = null, powerUpTimer = 0;
-    const maxLevel = 5;
-    let lastBulletTime = 0;
-    const bulletCooldown = 50;
     let extraLifeSpawnedThisLevel = false;
+    let lastBulletTime = 0;
+    const bulletCooldown = 160; // slightly slower for cyber feel
+
+    // Ship
+    const ship = {
+      x: canvas.width / 2,
+      y: canvas.height / 2,
+      angle: 0,
+      velX: 0,
+      velY: 0,
+      speed: 0.18,
+      friction: 0.965,
+      size: 22,
+      alive: true
+    };
+
+    // Joystick
     let joystickActive = false;
     let joystickAngle = 0;
     let joystickPower = 0;
     let joystickStartX = 0, joystickStartY = 0;
     let joystickCurrentX = 0, joystickCurrentY = 0;
 
-    const ship = {
-        x: canvas.width / 2,
-        y: canvas.height / 2,
-        angle: 0,
-        velX: 0,
-        velY: 0,
-        speed: 0.15,
-        friction: 0.97,
-        size: 20,
-        alive: true
-    };
-
     const POWERUP_TYPES = {
-        RAPID_FIRE: { symbol: '🔫', duration: 8000 },
-        SHIELD: { symbol: '🛡️', duration: 8000 },
-        EXTRA_LIFE: { symbol: '❤️', duration: 0 }
+      RAPID_FIRE: { symbol: '⚡', duration: 7000, color: '#ffcc00' },
+      SHIELD: { symbol: '🛡️', duration: 7000, color: '#00ffff' },
+      EXTRA_LIFE: { symbol: '❤️', duration: 0, color: '#ff00c8' }
     };
 
     function resizeCanvas() {
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-        playAgainRect.x = canvas.width / 2 - 100;
-        playAgainRect.y = canvas.height / 2 + 40;
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resizeCanvas);
+
+    // --- Asteroid shape (wireframe polygon) ---
+    function createWireframeShape(size) {
+      const points = [];
+      const numPoints = 8 + Math.floor(Math.random() * 6);
+      for (let i = 0; i < numPoints; i++) {
+        const angle = (i / numPoints) * Math.PI * 2;
+        const radius = size/2 * (0.7 + Math.random() * 0.4);
+        points.push({
+          x: Math.cos(angle) * radius,
+          y: Math.sin(angle) * radius
+        });
+      }
+      return points;
     }
 
-    function createBoulderShape(size) {
-        const points = [];
-        const numPoints = 8 + Math.floor(Math.random() * 5);
-        for (let i = 0; i < numPoints; i++) {
-            const angle = (i / numPoints) * Math.PI * 2;
-            const radius = size/2 * (0.7 + Math.random() * 0.3);
-            points.push({
-                x: Math.cos(angle) * radius,
-                y: Math.sin(angle) * radius
-            });
-        }
-        return points;
-    }
-
-    function createAsteroids(count = 3, x = null, y = null, size = 60) {
-        for (let i = 0; i < count; i++) {
-            asteroids.push({
-                x: x || Math.random() * canvas.width,
-                y: y || Math.random() * canvas.height,
-                speedX: (Math.random() - 0.5) * 2,
-                speedY: (Math.random() - 0.5) * 2,
-                size: size,
-                hitsRequired: level,
-                hitsTaken: 0,
-                rotation: Math.random() * Math.PI * 2,
-                rotationSpeed: (Math.random() - 0.5) * 0.05,
-                shape: createBoulderShape(size)
-            });
-        }
+    function createAsteroids(count = 3, x = null, y = null, size = 55) {
+      for (let i = 0; i < count; i++) {
+        asteroids.push({
+          x: x !== null ? x : Math.random() * canvas.width,
+          y: y !== null ? y : Math.random() * canvas.height,
+          speedX: (Math.random() - 0.5) * 2.2,
+          speedY: (Math.random() - 0.5) * 2.2,
+          size: size,
+          hitsRequired: level,        // KEY: shots needed = current level
+          hitsTaken: 0,
+          rotation: Math.random() * Math.PI * 2,
+          rotationSpeed: (Math.random() - 0.5) * 0.06,
+          shape: createWireframeShape(size),
+        });
+      }
     }
 
     function createExplosion(x, y, size) {
-        for (let i = 0; i < size; i++) {
-            explosions.push({
-                x: x,
-                y: y,
-                velX: (Math.random() - 0.5) * 5,
-                velY: (Math.random() - 0.5) * 5,
-                size: Math.random() * 3 + 1,
-                life: 1.0
-            });
-        }
+      for (let i = 0; i < size * 1.2; i++) {
+        explosions.push({
+          x: x, y: y,
+          velX: (Math.random() - 0.5) * 6,
+          velY: (Math.random() - 0.5) * 6,
+          size: Math.random() * 4 + 1.5,
+          life: 1.0,
+          color: Math.random() < 0.6 ? neonMagenta : neonCyan
+        });
+      }
     }
 
     function spawnPowerUp(x, y) {
-        if (Math.random() < 0.1) {
-            let availableTypes = ['RAPID_FIRE', 'SHIELD'];
-            if (!extraLifeSpawnedThisLevel && lives < 3) {
-                availableTypes.push('EXTRA_LIFE');
-            }
-            
-            const type = availableTypes[Math.floor(Math.random() * availableTypes.length)];
-            if (type === 'EXTRA_LIFE') extraLifeSpawnedThisLevel = true;
-            
-            powerUps.push({
-                x: x,
-                y: y,
-                type: type,
-                size: 25,
-                life: 500
-            });
+      if (Math.random() < 0.12) {
+        let types = ['RAPID_FIRE', 'SHIELD'];
+        if (!extraLifeSpawnedThisLevel && lives < 3) {
+          types.push('EXTRA_LIFE');
         }
+        const type = types[Math.floor(Math.random() * types.length)];
+        if (type === 'EXTRA_LIFE') extraLifeSpawnedThisLevel = true;
+        powerUps.push({
+          x: x, y: y,
+          type: type,
+          size: 26,
+          life: 480
+        });
+      }
     }
 
     function activatePowerUp(type) {
-        activePowerUp = type;
-        powerUpTimer = POWERUP_TYPES[type].duration;
-        if (type === 'EXTRA_LIFE') lives++;
+      activePowerUp = type;
+      powerUpTimer = POWERUP_TYPES[type].duration;
+      if (type === 'EXTRA_LIFE') {
+        lives = Math.min(lives + 1, 5);
+      }
     }
 
     function fireBullet() {
-        const now = Date.now();
-        if (now - lastBulletTime < bulletCooldown) return;
-        lastBulletTime = now;
+      if (!ship.alive) return;
+      const now = Date.now();
+      let cooldown = activePowerUp === 'RAPID_FIRE' ? 45 : bulletCooldown;
+      if (now - lastBulletTime < cooldown) return;
+      lastBulletTime = now;
 
-        const bulletSpeed = 10;
-        const spreadAngle = activePowerUp === 'RAPID_FIRE' ? 0.2 : 0;
-        
-        if (activePowerUp === 'RAPID_FIRE') {
-            for (let i = -1; i <= 1; i++) {
-                bullets.push({
-                    x: ship.x + Math.cos(ship.angle) * 20,
-                    y: ship.y + Math.sin(ship.angle) * 20,
-                    velX: Math.cos(ship.angle + i * spreadAngle) * bulletSpeed,
-                    velY: Math.sin(ship.angle + i * spreadAngle) * bulletSpeed,
-                    life: 40
-                });
-            }
-        } else {
-            bullets.push({
-                x: ship.x + Math.cos(ship.angle) * 20,
-                y: ship.y + Math.sin(ship.angle) * 20,
-                velX: Math.cos(ship.angle) * bulletSpeed,
-                velY: Math.sin(ship.angle) * bulletSpeed,
-                life: 60
-            });
+      const bulletSpeed = 9.5;
+      const spread = activePowerUp === 'RAPID_FIRE' ? 0.25 : 0;
+      const bulletColor = activePowerUp === 'RAPID_FIRE' ? neonYellow : neonCyan;
+
+      if (activePowerUp === 'RAPID_FIRE') {
+        for (let i = -1; i <= 1; i++) {
+          bullets.push({
+            x: ship.x + Math.cos(ship.angle) * 18,
+            y: ship.y + Math.sin(ship.angle) * 18,
+            velX: Math.cos(ship.angle + i * spread) * bulletSpeed,
+            velY: Math.sin(ship.angle + i * spread) * bulletSpeed,
+            life: 38,
+            color: bulletColor
+          });
         }
+      } else {
+        bullets.push({
+          x: ship.x + Math.cos(ship.angle) * 18,
+          y: ship.y + Math.sin(ship.angle) * 18,
+          velX: Math.cos(ship.angle) * bulletSpeed,
+          velY: Math.sin(ship.angle) * bulletSpeed,
+          life: 55,
+          color: bulletColor
+        });
+      }
     }
 
     function startLevel() {
-        extraLifeSpawnedThisLevel = false;
-        createAsteroids(2 + level);
+      extraLifeSpawnedThisLevel = false;
+      createAsteroids(2 + level);
     }
 
     function resetGame() {
-        bullets = [];
-        particles = [];
-        asteroids = [];
-        explosions = [];
-        powerUps = [];
-        lives = 3;
-        score = 0;
-        level = 1;
-        fadeAlpha = 0;
-        gameStarted = true;
-        gameOver = false;
-        demoMode = false;
-        countdownTimer = 600;
-        ship.x = canvas.width / 2;
-        ship.y = canvas.height / 2;
-        ship.velX = 0;
-        ship.velY = 0;
-        ship.alive = true;
-        activePowerUp = null;
-        startLevel();
+      bullets = []; particles = []; asteroids = []; explosions = []; powerUps = [];
+      lives = 3; score = 0; level = 1;
+      fadeAlpha = 0;
+      gameStarted = true;
+      gameOver = false;
+      demoMode = false;
+      countdownTimer = 600;
+      ship.x = canvas.width / 2;
+      ship.y = canvas.height / 2;
+      ship.velX = 0;
+      ship.velY = 0;
+      ship.alive = true;
+      activePowerUp = null;
+      powerUpTimer = 0;
+      demoMessage.style.display = 'none';
+      updateUI();
+      startLevel();
+      if (!window._loopRunning) {
+        window._loopRunning = true;
         loop();
+      }
+    }
+
+    function updateUI() {
+      livesDisplay.textContent = lives;
+      scoreDisplay.textContent = score;
+      levelDisplay.textContent = level;
+      if (activePowerUp && powerUpTimer > 0) {
+        powerUpDisplay.textContent = `${activePowerUp} ${(powerUpTimer/1000).toFixed(1)}s`;
+        powerUpDisplay.style.color = POWERUP_TYPES[activePowerUp]?.color || 'white';
+      } else {
+        powerUpDisplay.textContent = '';
+      }
+    }
+
+    function drawWireframeShip() {
+      ctx.save();
+      ctx.translate(ship.x, ship.y);
+      ctx.rotate(ship.angle);
+      // Shield glow
+      if (activePowerUp === 'SHIELD') {
+        ctx.strokeStyle = neonCyan;
+        ctx.lineWidth = 3;
+        ctx.shadowColor = neonCyan;
+        ctx.shadowBlur = 18;
+        ctx.beginPath();
+        ctx.arc(0, 0, ship.size + 12, 0, Math.PI*2);
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+        ctx.shadowColor = 'transparent';
+      }
+      // Ship wireframe
+      ctx.strokeStyle = neonMagenta;
+      ctx.lineWidth = 2.5;
+      ctx.shadowColor = neonMagenta;
+      ctx.shadowBlur = 14;
+      ctx.beginPath();
+      ctx.moveTo(18, 0);
+      ctx.lineTo(-12, -10);
+      ctx.lineTo(-12, 10);
+      ctx.closePath();
+      ctx.stroke();
+      // inner line
+      ctx.strokeStyle = neonCyan;
+      ctx.lineWidth = 1.5;
+      ctx.shadowColor = neonCyan;
+      ctx.beginPath();
+      ctx.moveTo(12, 0);
+      ctx.lineTo(-7, -6);
+      ctx.lineTo(-7, 6);
+      ctx.closePath();
+      ctx.stroke();
+      ctx.restore();
     }
 
     function draw() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      
+      // Grid effect
+      ctx.strokeStyle = '#00ffff22';
+      ctx.lineWidth = 0.6;
+      for (let i = 0; i < canvas.width; i+=70) {
+        ctx.beginPath();
+        ctx.moveTo(i,0);
+        ctx.lineTo(i, canvas.height);
+        ctx.stroke();
+      }
+      for (let j = 0; j < canvas.height; j+=70) {
+        ctx.beginPath();
+        ctx.moveTo(0,j);
+        ctx.lineTo(canvas.width, j);
+        ctx.stroke();
+      }
+
+      if (demoMode) {
+        demoMessage.style.display = 'block';
+        return;
+      }
+
+      // Particles
+      particles.forEach(p => {
+        ctx.fillStyle = p.color || neonCyan;
+        ctx.shadowBlur = 8;
+        ctx.shadowColor = p.color || neonCyan;
+        ctx.fillRect(p.x, p.y, p.size, p.size);
+      });
+
+      // Explosions
+      explosions.forEach(e => {
+        ctx.fillStyle = e.color;
+        ctx.shadowBlur = 12;
+        ctx.shadowColor = e.color;
+        ctx.fillRect(e.x, e.y, e.size, e.size);
+      });
+
+      // Power-ups
+      powerUps.forEach(p => {
+        const typeInfo = POWERUP_TYPES[p.type];
+        ctx.font = `bold ${p.size}px "Courier New"`;
+        ctx.fillStyle = typeInfo.color;
+        ctx.shadowBlur = 20;
+        ctx.shadowColor = typeInfo.color;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(typeInfo.symbol, p.x, p.y);
+      });
+
+      // Asteroids with wireframe + NUMBER
+      asteroids.forEach(a => {
+        ctx.save();
+        ctx.translate(a.x, a.y);
+        ctx.rotate(a.rotation);
+        ctx.strokeStyle = neonCyan;
+        ctx.lineWidth = 2.2;
+        ctx.shadowBlur = 16;
+        ctx.shadowColor = neonMagenta;
+        ctx.beginPath();
+        ctx.moveTo(a.shape[0].x, a.shape[0].y);
+        for (let i = 1; i < a.shape.length; i++) {
+          ctx.lineTo(a.shape[i].x, a.shape[i].y);
+        }
+        ctx.closePath();
+        ctx.stroke();
         
-        if (demoMode) {
-            ctx.fillStyle = "white";
-            ctx.font = "48px Arial";
-            ctx.textAlign = "center";
-            ctx.fillText("TAP TO BEGIN", canvas.width / 2, canvas.height / 2);
-            return;
-        }
+        // Number display: shots needed (hitsRequired - hitsTaken)
+        const remaining = a.hitsRequired - a.hitsTaken;
+        ctx.font = `bold ${Math.max(16, a.size/3)}px "Courier New"`;
+        ctx.fillStyle = '#ffcc00';
+        ctx.shadowColor = '#ff00c8';
+        ctx.shadowBlur = 18;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(remaining, 0, 0);
+        ctx.restore();
+      });
 
-        particles.forEach(p => {
-            ctx.fillStyle = `rgba(255, 255, 255, ${p.life})`;
-            ctx.fillRect(p.x, p.y, p.size, p.size);
-        });
+      // Bullets
+      bullets.forEach(b => {
+        ctx.fillStyle = b.color;
+        ctx.shadowBlur = 15;
+        ctx.shadowColor = b.color;
+        ctx.fillRect(b.x-2.5, b.y-2.5, 5, 5);
+      });
 
-        explosions.forEach(e => {
-            ctx.fillStyle = `rgba(255, ${Math.floor(e.life * 100)}, 0, ${e.life})`;
-            ctx.fillRect(e.x, e.y, e.size, e.size);
-        });
+      if (ship.alive) drawWireframeShip();
 
-        powerUps.forEach(p => {
-            ctx.font = `${p.size}px Arial`;
-            ctx.fillStyle = "white";
-            ctx.textAlign = "center";
-            ctx.textBaseline = "middle";
-            ctx.fillText(POWERUP_TYPES[p.type].symbol, p.x, p.y);
-        });
+      // Reset shadow
+      ctx.shadowBlur = 0;
+      ctx.shadowColor = 'transparent';
 
-        asteroids.forEach(a => {
-            ctx.save();
-            ctx.translate(a.x, a.y);
-            ctx.rotate(a.rotation);
-            ctx.strokeStyle = "white";
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-            ctx.moveTo(a.shape[0].x, a.shape[0].y);
-            for (let i = 1; i < a.shape.length; i++) {
-                ctx.lineTo(a.shape[i].x, a.shape[i].y);
-            }
-            ctx.closePath();
-            ctx.stroke();
-            ctx.restore();
-        });
-
-        if (ship.alive) {
-            ctx.save();
-            ctx.translate(ship.x, ship.y);
-            ctx.rotate(ship.angle);
-            
-            if (activePowerUp === 'SHIELD') {
-                ctx.strokeStyle = 'gold';
-                ctx.lineWidth = 2;
-                ctx.beginPath();
-                ctx.arc(0, 0, ship.size + 10, 0, Math.PI * 2);
-                ctx.stroke();
-            }
-            
-            ctx.strokeStyle = "white";
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-            ctx.moveTo(15, 0);
-            ctx.lineTo(-10, -8);
-            ctx.lineTo(-10, 8);
-            ctx.closePath();
-            ctx.stroke();
-            ctx.restore();
-        }
-
-        bullets.forEach(b => {
-            ctx.fillStyle = activePowerUp === 'RAPID_FIRE' ? 'cyan' : 'white';
-            ctx.fillRect(b.x - 2, b.y - 2, 4, 4);
-        });
-
-        ctx.fillStyle = "white";
-        ctx.font = "20px Arial";
-        ctx.textAlign = "left";
-        ctx.fillText(`Lives: ${lives}`, 20, 30);
-        ctx.fillText(`Score: ${score}`, 20, 60);
-        ctx.fillText(`Level: ${level}`, 20, 90);
-        
-        if (activePowerUp && powerUpTimer > 0) {
-            ctx.fillText(`${activePowerUp}: ${(powerUpTimer/1000).toFixed(1)}s`, 20, 120);
-        }
-
-        if (gameOver) {
-            ctx.fillStyle = `rgba(0, 0, 0, ${fadeAlpha})`;
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            ctx.fillStyle = "white";
-            ctx.font = "48px Arial";
-            ctx.textAlign = "center";
-            ctx.fillText("GAME OVER", canvas.width / 2, canvas.height / 2 - 20);
-            ctx.font = "24px Arial";
-            ctx.fillText(`Auto-demo in ${Math.ceil(countdownTimer / 60)}...`, canvas.width / 2, canvas.height / 2 + 20);
-
-            ctx.fillStyle = "green";
-            ctx.fillRect(playAgainRect.x, playAgainRect.y, playAgainRect.w, playAgainRect.h);
-            ctx.fillStyle = "white";
-            ctx.font = "20px Arial";
-            ctx.textAlign = "center";
-            ctx.fillText("Play Again", playAgainRect.x + playAgainRect.w/2, playAgainRect.y + 30);
-
-            if (fadeAlpha < 0.7) fadeAlpha += 0.02;
-        }
+      // Game over overlay
+      if (gameOver) {
+        ctx.fillStyle = `rgba(5,0,15,${fadeAlpha})`;
+        ctx.fillRect(0,0,canvas.width,canvas.height);
+        ctx.fillStyle = neonMagenta;
+        ctx.font = "bold 44px 'Courier New'";
+        ctx.textAlign = "center";
+        ctx.shadowBlur = 30;
+        ctx.shadowColor = neonCyan;
+        ctx.fillText("SYSTEM OFFLINE", canvas.width/2, canvas.height/2-30);
+        ctx.fillStyle = neonCyan;
+        ctx.font = "20px 'Courier New'";
+        ctx.fillText(`DEMO IN ${Math.ceil(countdownTimer/60)}s`, canvas.width/2, canvas.height/2+30);
+      }
     }
 
     function update() {
-        if (demoMode || !gameStarted) return;
+      if (demoMode || !gameStarted || gameOver) {
         if (gameOver) {
-            countdownTimer--;
-            if (countdownTimer <= 0) {
-                demoMode = true;
-                gameStarted = false;
+          countdownTimer--;
+          if (countdownTimer <= 0) {
+            demoMode = true;
+            gameStarted = false;
+            gameOver = false;
+            demoMessage.style.display = 'block';
+          }
+        }
+        return;
+      }
+
+      // Joystick movement
+      if (joystickActive && ship.alive) {
+        const moveX = Math.cos(joystickAngle) * joystickPower * ship.speed;
+        const moveY = Math.sin(joystickAngle) * joystickPower * ship.speed;
+        ship.velX += moveX;
+        ship.velY += moveY;
+        ship.angle = joystickAngle;
+      }
+
+      if (ship.alive) {
+        ship.x += ship.velX;
+        ship.y += ship.velY;
+        ship.velX *= ship.friction;
+        ship.velY *= ship.friction;
+        if (ship.x < 0) ship.x = canvas.width;
+        if (ship.x > canvas.width) ship.x = 0;
+        if (ship.y < 0) ship.y = canvas.height;
+        if (ship.y > canvas.height) ship.y = 0;
+      }
+
+      // Particles
+      particles.forEach((p,i)=> {
+        p.x += p.velX;
+        p.y += p.velY;
+        p.life -= 0.04;
+        if(p.life <= 0) particles.splice(i,1);
+      });
+
+      // Bullets
+      bullets.forEach((b,i)=> {
+        b.x += b.velX;
+        b.y += b.velY;
+        b.life--;
+        if(b.life<=0 || b.x<0 || b.x>canvas.width || b.y<0 || b.y>canvas.height) bullets.splice(i,1);
+      });
+
+      // Asteroids collision & hit
+      for (let i = asteroids.length-1; i >= 0; i--) {
+        let a = asteroids[i];
+        a.x += a.speedX;
+        a.y += a.speedY;
+        a.rotation += a.rotationSpeed;
+        if (a.x < 0) a.x = canvas.width;
+        if (a.x > canvas.width) a.x = 0;
+        if (a.y < 0) a.y = canvas.height;
+        if (a.y > canvas.height) a.y = 0;
+
+        if (ship.alive && activePowerUp !== 'SHIELD') {
+          let dx = ship.x - a.x;
+          let dy = ship.y - a.y;
+          if (Math.sqrt(dx*dx+dy*dy) < a.size/2 + ship.size/2) {
+            createExplosion(ship.x, ship.y, 45);
+            ship.alive = false;
+            lives--;
+            if (lives <= 0) {
+              gameOver = true;
+              fadeAlpha = 0;
+            } else {
+              setTimeout(() => {
+                ship.x = canvas.width/2;
+                ship.y = canvas.height/2;
+                ship.velX = 0; ship.velY = 0;
+                ship.alive = true;
+              }, 1100);
             }
-            return;
+            break;
+          }
         }
 
-        if (joystickActive && ship.alive) {
-            const moveX = Math.cos(joystickAngle) * joystickPower * ship.speed;
-            const moveY = Math.sin(joystickAngle) * joystickPower * ship.speed;
-            ship.velX += moveX;
-            ship.velY += moveY;
-            ship.angle = joystickAngle;
+        for (let j = bullets.length-1; j >= 0; j--) {
+          let b = bullets[j];
+          let dx = b.x - a.x;
+          let dy = b.y - a.y;
+          if (Math.sqrt(dx*dx+dy*dy) < a.size/2) {
+            bullets.splice(j,1);
+            a.hitsTaken++;
+            if (a.hitsTaken >= a.hitsRequired) {
+              createExplosion(a.x, a.y, a.size);
+              spawnPowerUp(a.x, a.y);
+              asteroids.splice(i,1);
+              score += Math.floor(a.size) * level;
+              if (a.size > 32) {
+                createAsteroids(2, a.x, a.y, a.size/2);
+              }
+              break;
+            }
+          }
         }
+      }
 
+      // Power-ups
+      for (let i = powerUps.length-1; i >= 0; i--) {
+        let p = powerUps[i];
+        p.life--;
+        if (p.life <= 0) { powerUps.splice(i,1); continue; }
         if (ship.alive) {
-            ship.x += ship.velX;
-            ship.y += ship.velY;
-            ship.velX *= ship.friction;
-            ship.velY *= ship.friction;
-
-            if (ship.x < 0) ship.x = canvas.width;
-            if (ship.x > canvas.width) ship.x = 0;
-            if (ship.y < 0) ship.y = canvas.height;
-            if (ship.y > canvas.height) ship.y = 0;
-
-            if (Math.abs(ship.velX) > 0.02 || Math.abs(ship.velY) > 0.02) {
-                particles.push({
-                    x: ship.x - Math.cos(ship.angle) * 15,
-                    y: ship.y - Math.sin(ship.angle) * 15,
-                    velX: (Math.random() - 0.5) * 0.5,
-                    velY: (Math.random() - 0.5) * 0.5,
-                    size: Math.random() * 3 + 1,
-                    life: 1.0
-                });
-            }
+          let dx = ship.x - p.x, dy = ship.y - p.y;
+          if (Math.sqrt(dx*dx+dy*dy) < p.size + ship.size/2) {
+            activatePowerUp(p.type);
+            powerUps.splice(i,1);
+          }
         }
+      }
 
-        particles.forEach((p, i) => {
-            p.x += p.velX;
-            p.y += p.velY;
-            p.life -= 0.05;
-            if (p.life <= 0) particles.splice(i, 1);
-        });
+      explosions.forEach((e,i)=> {
+        e.x += e.velX;
+        e.y += e.velY;
+        e.life -= 0.03;
+        if(e.life <= 0) explosions.splice(i,1);
+      });
 
-        bullets.forEach((b, i) => {
-            b.x += b.velX;
-            b.y += b.velY;
-            b.life--;
-            if (b.life <= 0 || b.x < 0 || b.x > canvas.width || b.y < 0 || b.y > canvas.height) {
-                bullets.splice(i, 1);
-            }
-        });
+      if (activePowerUp) {
+        powerUpTimer -= 16;
+        if (powerUpTimer <= 0) activePowerUp = null;
+      }
 
-        asteroids.forEach((a, i) => {
-            a.x += a.speedX;
-            a.y += a.speedY;
-            a.rotation += a.rotationSpeed;
-            
-            if (a.x < 0) a.x = canvas.width;
-            if (a.x > canvas.width) a.x = 0;
-            if (a.y < 0) a.y = canvas.height;
-            if (a.y > canvas.height) a.y = 0;
+      if (asteroids.length === 0 && !gameOver && ship.alive) {
+        level++;
+        if (level > 99) level = 99;
+        startLevel();
+      }
 
-            if (ship.alive) {
-                let dx = ship.x - a.x;
-                let dy = ship.y - a.y;
-                let dist = Math.sqrt(dx * dx + dy * dy);
-                if (dist < a.size / 2 + ship.size / 2 && activePowerUp !== "SHIELD") {
-                    createExplosion(ship.x, ship.y, 50);
-                    ship.alive = false;
-                    lives--;
-                    if (lives <= 0) {
-                        gameOver = true;
-                    } else {
-                        setTimeout(() => {
-                            ship.x = canvas.width / 2;
-                            ship.y = canvas.height / 2;
-                            ship.velX = 0;
-                            ship.velY = 0;
-                            ship.alive = true;
-                        }, 1000);
-                    }
-                }
-            }
-
-            bullets.forEach((b, j) => {
-                let dx = b.x - a.x;
-                let dy = b.y - a.y;
-                let dist = Math.sqrt(dx * dx + dy * dy);
-                if (dist < a.size / 2) {
-                    a.hitsTaken++;
-                    bullets.splice(j, 1);
-                    
-                    if (a.hitsTaken >= a.hitsRequired) {
-                        createExplosion(a.x, a.y, a.size);
-                        spawnPowerUp(a.x, a.y);
-                        asteroids.splice(i, 1);
-                        score += Math.floor(a.size);
-                        
-                        if (a.size > 30) {
-                            let newSize = a.size / 2;
-                            createAsteroids(2, a.x, a.y, newSize);
-                        }
-                    }
-                }
-            });
-        });
-
-        powerUps.forEach((p, i) => {
-            p.life--;
-            if (p.life <= 0) {
-                powerUps.splice(i, 1);
-                return;
-            }
-            
-            if (ship.alive) {
-                let dx = ship.x - p.x;
-                let dy = ship.y - p.y;
-                let dist = Math.sqrt(dx * dx + dy * dy);
-                if (dist < p.size + ship.size / 2) {
-                    activatePowerUp(p.type);
-                    powerUps.splice(i, 1);
-                }
-            }
-        });
-
-        explosions.forEach((e, i) => {
-            e.x += e.velX;
-            e.y += e.velY;
-            e.life -= 0.03;
-            if (e.life <= 0) explosions.splice(i, 1);
-        });
-
-        if (activePowerUp) {
-            powerUpTimer -= 16;
-            if (powerUpTimer <= 0) activePowerUp = null;
-        }
-
-        if (asteroids.length === 0 && !gameOver) {
-            level++;
-            if (level > maxLevel) level = maxLevel;
-            startLevel();
-        }
+      if (gameOver && fadeAlpha < 0.75) fadeAlpha += 0.015;
+      updateUI();
     }
 
     function loop() {
-        if (!gameStarted && !demoMode) return;
-        update();
+      if (!gameStarted && demoMode) {
         draw();
-        if (!gameOver || demoMode) requestAnimationFrame(loop);
+        requestAnimationFrame(loop);
+        return;
+      }
+      update();
+      draw();
+      requestAnimationFrame(loop);
     }
 
-    // Event listeners
-    window.addEventListener('resize', resizeCanvas);
+    // --- Event Listeners ---
+    fireButton.addEventListener('touchstart', (e) => { e.preventDefault(); if(ship.alive) fireBullet(); });
+    fireButton.addEventListener('mousedown', (e) => { e.preventDefault(); if(ship.alive) fireBullet(); });
 
     canvas.addEventListener('click', (e) => {
-        if (demoMode) return resetGame();
-        if (gameOver) {
-            const rect = canvas.getBoundingClientRect();
-            const x = e.clientX - rect.left;
-            const y = e.clientY - rect.top;
-            if (x > playAgainRect.x && x < playAgainRect.x + playAgainRect.w &&
-                y > playAgainRect.y && y < playAgainRect.y + playAgainRect.h) {
-                resetGame();
-            }
+      if (demoMode) {
+        resetGame();
+        return;
+      }
+      if (gameOver) {
+        const rect = canvas.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        if (x > canvas.width/2-100 && x < canvas.width/2+100 && y > canvas.height/2+20 && y < canvas.height/2+70) {
+          resetGame();
         }
+      }
     });
 
-    fireButton.addEventListener('touchstart', (e) => {
-        e.preventDefault();
-        if (ship.alive) fireBullet();
-    });
-
-    fireButton.addEventListener('click', () => {
-        if (ship.alive) fireBullet();
-    });
-
-    // Joystick controls
-    const joystickZone = document.getElementById('joystick-zone');
-    
+    // Joystick handling
     joystickZone.addEventListener('touchstart', (e) => {
-        e.preventDefault();
-        const touch = e.touches[0];
-        const rect = joystickZone.getBoundingClientRect();
-        joystickStartX = touch.clientX - rect.left;
-        joystickStartY = touch.clientY - rect.top;
-        joystickCurrentX = joystickStartX;
-        joystickCurrentY = joystickStartY;
-        joystickVisual.style.display = 'block';
-        joystickVisual.style.left = `${joystickStartX}px`;
-        joystickVisual.style.top = `${joystickStartY}px`;
-        joystickActive = true;
+      e.preventDefault();
+      const touch = e.touches[0];
+      const rect = joystickZone.getBoundingClientRect();
+      joystickStartX = touch.clientX - rect.left;
+      joystickStartY = touch.clientY - rect.top;
+      joystickCurrentX = joystickStartX;
+      joystickCurrentY = joystickStartY;
+      joystickVisual.style.display = 'block';
+      joystickVisual.style.left = joystickStartX + 'px';
+      joystickVisual.style.top = joystickStartY + 'px';
+      joystickActive = true;
     });
-
     joystickZone.addEventListener('touchmove', (e) => {
-        e.preventDefault();
-        if (!joystickActive) return;
-        const touch = e.touches[0];
-        const rect = joystickZone.getBoundingClientRect();
-        joystickCurrentX = touch.clientX - rect.left;
-        joystickCurrentY = touch.clientY - rect.top;
-        const dx = joystickCurrentX - joystickStartX;
-        const dy = joystickCurrentY - joystickStartY;
-        const dist = Math.sqrt(dx * dx + dy * dy);
-        const maxDist = 100;
-        joystickAngle = Math.atan2(dy, dx);
-        joystickPower = Math.min(dist / maxDist, 1);
-        const limitedDist = Math.min(dist, maxDist);
-        joystickVisual.style.left = `${joystickStartX + Math.cos(joystickAngle) * limitedDist}px`;
-        joystickVisual.style.top = `${joystickStartY + Math.sin(joystickAngle) * limitedDist}px`;
+      e.preventDefault();
+      if (!joystickActive) return;
+      const touch = e.touches[0];
+      const rect = joystickZone.getBoundingClientRect();
+      joystickCurrentX = touch.clientX - rect.left;
+      joystickCurrentY = touch.clientY - rect.top;
+      const dx = joystickCurrentX - joystickStartX;
+      const dy = joystickCurrentY - joystickStartY;
+      const dist = Math.sqrt(dx*dx+dy*dy);
+      const maxDist = 50;
+      joystickAngle = Math.atan2(dy, dx);
+      joystickPower = Math.min(dist/maxDist, 1);
+      const limited = Math.min(dist, maxDist);
+      joystickVisual.style.left = (joystickStartX + Math.cos(joystickAngle)*limited) + 'px';
+      joystickVisual.style.top = (joystickStartY + Math.sin(joystickAngle)*limited) + 'px';
     });
+    joystickZone.addEventListener('touchend', (e) => { e.preventDefault(); joystickActive = false; joystickVisual.style.display = 'none'; });
+    joystickZone.addEventListener('touchcancel', (e) => { e.preventDefault(); joystickActive = false; joystickVisual.style.display = 'none'; });
 
-    joystickZone.addEventListener('touchend', (e) => {
-        e.preventDefault();
-        joystickActive = false;
-        joystickVisual.style.display = 'none';
-    });
-
-    joystickZone.addEventListener('touchcancel', (e) => {
-        e.preventDefault();
-        joystickActive = false;
-        joystickVisual.style.display = 'none';
-    });
-
-    // Mouse controls for desktop
+    // Mouse joystick
     joystickZone.addEventListener('mousedown', (e) => {
-        if (e.button !== 0) return;
-        const rect = joystickZone.getBoundingClientRect();
-        joystickStartX = e.clientX - rect.left;
-        joystickStartY = e.clientY - rect.top;
-        joystickCurrentX = joystickStartX;
-        joystickCurrentY = joystickStartY;
-        joystickVisual.style.display = 'block';
-        joystickVisual.style.left = `${joystickStartX}px`;
-        joystickVisual.style.top = `${joystickStartY}px`;
-        joystickActive = true;
+      e.preventDefault();
+      const rect = joystickZone.getBoundingClientRect();
+      joystickStartX = e.clientX - rect.left;
+      joystickStartY = e.clientY - rect.top;
+      joystickActive = true;
+      joystickVisual.style.display = 'block';
     });
-
     window.addEventListener('mousemove', (e) => {
-        if (!joystickActive) return;
-        const rect = joystickZone.getBoundingClientRect();
-        joystickCurrentX = e.clientX - rect.left;
-        joystickCurrentY = e.clientY - rect.top;
-        const dx = joystickCurrentX - joystickStartX;
-        const dy = joystickCurrentY - joystickStartY;
-        const dist = Math.sqrt(dx * dx + dy * dy);
-        const maxDist = 100;
-        joystickAngle = Math.atan2(dy, dx);
-        joystickPower = Math.min(dist / maxDist, 1);
-        const limitedDist = Math.min(dist, maxDist);
-        joystickVisual.style.left = `${joystickStartX + Math.cos(joystickAngle) * limitedDist}px`;
-        joystickVisual.style.top = `${joystickStartY + Math.sin(joystickAngle) * limitedDist}px`;
+      if (!joystickActive) return;
+      const rect = joystickZone.getBoundingClientRect();
+      joystickCurrentX = e.clientX - rect.left;
+      joystickCurrentY = e.clientY - rect.top;
+      const dx = joystickCurrentX - joystickStartX;
+      const dy = joystickCurrentY - joystickStartY;
+      const dist = Math.sqrt(dx*dx+dy*dy);
+      const maxDist = 50;
+      joystickAngle = Math.atan2(dy, dx);
+      joystickPower = Math.min(dist/maxDist,1);
+      const limited = Math.min(dist, maxDist);
+      joystickVisual.style.left = (joystickStartX + Math.cos(joystickAngle)*limited) + 'px';
+      joystickVisual.style.top = (joystickStartY + Math.sin(joystickAngle)*limited) + 'px';
     });
+    window.addEventListener('mouseup', () => { joystickActive = false; joystickVisual.style.display = 'none'; });
 
-    window.addEventListener('mouseup', (e) => {
-        if (e.button !== 0) return;
-        joystickActive = false;
-        joystickVisual.style.display = 'none';
-    });
-
-    // Initialize game
     resizeCanvas();
     demoMode = true;
-    draw();
-    </script>
+    demoMessage.style.display = 'block';
+    window._loopRunning = true;
+    loop();
+  })();
+</script>
 </body>
 </html>
